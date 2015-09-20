@@ -7,6 +7,9 @@ Logger = require './Logger'
 IdrisModel = require './idris-model'
 Ipkg = require './utils/ipkg'
 Symbol = require './utils/symbol'
+Cycle = require '@cycle/core'
+PanelView = require './views/panel-view'
+REPLView = require './views/repl-view'
 
 class IdrisController
 
@@ -23,6 +26,7 @@ class IdrisController
     'language-idris:typecheck': @runCommand @typecheckFile
     'language-idris:print-definition': @runCommand @printDefinition
     'language-idris:stop-compiler': @stopCompiler
+    'language-idris:open-repl': @runCommand @openREPL
 
   isIdrisFile: (uri) ->
     uri?.match? /\.idr$/
@@ -332,6 +336,28 @@ class IdrisController
 
     @model
       .printDefinition word
+      .subscribe successHandler, @displayErrors
+
+  openREPL: ({ target }) =>
+    editor = target.model
+    uri = editor.getURI()
+
+    successHandler = ({ responseType, msg }) =>
+      workspace = atom.workspace
+      hostElement = window.document.createElement 'div'
+      workspace.addBottomPanel
+        item: hostElement
+
+      drivers = PanelView.drivers
+        hostElement: hostElement
+        panelContent: REPLView.main
+        contentDriver: REPLView.driver @model
+
+      Cycle.run PanelView.main, drivers
+
+    @model
+      .load uri
+      .filter ({ responseType }) -> responseType == 'return'
       .subscribe successHandler, @displayErrors
 
   displayErrors: (err) =>
