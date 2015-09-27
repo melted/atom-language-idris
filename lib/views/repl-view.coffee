@@ -18,7 +18,7 @@ view = (state$) ->
 
     CycleDOM.h 'div',
       [
-        CycleDOM.h 'input', { type: 'text' }, 'toggle'
+        CycleDOM.h 'input', { type: 'text', className: 'native-key-bindings' }, 'toggle'
         CycleDOM.h 'div', lines
       ]
 
